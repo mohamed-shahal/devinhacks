@@ -1,0 +1,2 @@
+# Preserve the supplied specification verbatim, including Markdown hard breaks.
+implement.md whitespace=-blank-at-eol
