@@ -1,5 +1,7 @@
 # SceneCraft AI
 
+Repository: **devinhacks**.
+
 A browser-based cinematic video studio. Write a story, direct a sequence of camera angles and movements, and render a finished animated video locally with Three.js. The current product contract is [implement.md](implement.md); the scene editor remains available separately at `/scene-editor`.
 
 ## Current state
