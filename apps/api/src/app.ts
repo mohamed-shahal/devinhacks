@@ -4,6 +4,7 @@ import { requestId } from 'hono/request-id';
 import { secureHeaders } from 'hono/secure-headers';
 import type { ApiError, Health } from '@scenecraft/shared';
 import type { Env } from './config/env';
+import { createRoutes } from './routes';
 
 export function createApp(env: Env) {
   const app = new Hono();
@@ -13,14 +14,16 @@ export function createApp(env: Env) {
     '/api/*',
     cors({
       origin: env.APP_BASE_URL,
-      allowMethods: ['GET'],
+      allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+      allowHeaders: ['Content-Type', 'X-Requested-With'],
       credentials: false,
     }),
   );
   app.use('/api/*', async (c, next) => {
     c.header('Cache-Control', 'no-store');
     const origin = c.req.header('Origin');
-    if (origin && origin !== env.APP_BASE_URL) {
+    const mutating = !['GET', 'HEAD', 'OPTIONS'].includes(c.req.method);
+    if ((origin && origin !== env.APP_BASE_URL) || (mutating && !origin)) {
       return c.json(
         {
           error: {
@@ -34,12 +37,13 @@ export function createApp(env: Env) {
     }
     await next();
   });
+  app.route('/api/v1', createRoutes());
   app.get('/api/v1/health', (c) =>
     c.json({
       status: 'ok',
       service: 'scenecraft-api',
-      milestone: 'M0',
-      mode: 'local-foundation',
+      milestone: 'M8',
+      mode: 'local-only',
     } satisfies Health),
   );
   app.notFound((c) =>

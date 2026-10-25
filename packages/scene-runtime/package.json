@@ -1,0 +1,10 @@
+{
+  "name": "@scenecraft/scene-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@scenecraft/scene-schema": "1.0.0"
+  }
+}

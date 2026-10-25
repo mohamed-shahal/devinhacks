@@ -3,18 +3,12 @@ import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
-  Box,
-  Boxes,
   Check,
-  CircleHelp,
-  FolderOpen,
+  Clapperboard,
   Layers3,
-  Monitor,
-  Orbit,
   RefreshCw,
   Settings2,
   ShieldCheck,
-  SlidersHorizontal,
   Sparkles,
   Workflow,
 } from 'lucide-react';
@@ -22,11 +16,14 @@ import { getHealth } from '../api/health';
 import { Preferences } from '../features/settings/Preferences';
 import { useTheme } from '../features/settings/useTheme';
 import { roadmap } from './roadmap';
+import { Editor } from '../features/studio/Editor';
+import { Projects } from '../features/projects/Projects';
+import { Assets } from '../features/assets/Assets';
+import { AIModels } from '../features/ai-models/AIModels';
+import { VideoStudio } from '../features/video/VideoStudio';
 
 const navigation = [
-  { to: '/', label: 'Studio', icon: Orbit },
-  { to: '/projects', label: 'Projects', icon: FolderOpen },
-  { to: '/assets', label: 'Assets', icon: Boxes },
+  { to: '/', label: 'Video Studio', icon: Clapperboard },
   { to: '/ai-models', label: 'AI Models', icon: Workflow },
   { to: '/settings', label: 'Settings', icon: Settings2 },
 ];
@@ -53,7 +50,7 @@ function ApiStatus() {
         <span>
           {health.isError
             ? 'Start npm run dev to connect.'
-            : 'Foundation · No provider connected'}
+            : 'Local development API'}
         </span>
       </div>
       <button
@@ -67,156 +64,6 @@ function ApiStatus() {
         <RefreshCw size={15} className={health.isFetching ? 'spinning' : ''} />
       </button>
     </div>
-  );
-}
-
-function Studio() {
-  return (
-    <>
-      <div className="page-intro">
-        <div>
-          <p className="eyebrow">From an idea to a world</p>
-          <h1>Your scene starts here.</h1>
-          <p>A workspace for editable, animated 3D scenes.</p>
-        </div>
-        <span className="tag">Foundation · M0</span>
-      </div>
-      <div className="studio-layout">
-        <section className="viewport-empty" aria-labelledby="viewport-title">
-          <div className="viewport-label">
-            <span>
-              <Monitor size={14} /> Studio workspace
-            </span>
-            <span>Renderer arrives in M1</span>
-          </div>
-          <div className="empty-stage">
-            <div className="scene-symbol" aria-hidden="true">
-              <Box strokeWidth={1} size={70} />
-              <span className="axis axis-x">X</span>
-              <span className="axis axis-y">Y</span>
-              <span className="axis axis-z">Z</span>
-            </div>
-            <p className="eyebrow">A blank canvas. A clear beginning.</p>
-            <h2 id="viewport-title">Make room for your imagination.</h2>
-            <p>
-              The foundation is ready. Validated scene presets and the live 3D
-              viewport are the next milestone.
-            </p>
-            <Link className="button primary" to="/roadmap">
-              Explore the build plan <ArrowRight size={16} />
-            </Link>
-          </div>
-          <div className="viewport-footer">
-            <span>
-              <ShieldCheck size={14} /> Structured scenes. No generated scripts.
-            </span>
-            <span>No scene loaded</span>
-          </div>
-        </section>
-        <aside className="side-panel" aria-labelledby="workspace-title">
-          <div className="panel-label">
-            <SlidersHorizontal size={15} />
-            <h2 id="workspace-title">Workspace</h2>
-          </div>
-          <div className="workspace-state">
-            <span className="small-icon">
-              <Layers3 size={22} />
-            </span>
-            <h3>Ready for the first scene</h3>
-            <p>
-              Scene tools will become available as each milestone is completed.
-            </p>
-          </div>
-          <div className="upcoming-feature">
-            <span className="step-label">Next · M1</span>
-            <h3>Build the scene engine</h3>
-            <p>
-              Primitives, a procedural robot, lighting and a camera. All driven
-              by validated scene data.
-            </p>
-          </div>
-          <div className="upcoming-feature">
-            <span className="step-label">Then · M2</span>
-            <h3>Make every detail editable</h3>
-            <p>
-              Select objects, adjust transforms and explore animation with undo
-              and redo.
-            </p>
-          </div>
-          <p className="panel-note">
-            <CircleHelp size={15} /> This is the foundation release. Scene
-            generation is not available yet.
-          </p>
-        </aside>
-      </div>
-      <div className="principles">
-        <div>
-          <ShieldCheck size={18} />
-          <div>
-            <h3>Safe by design</h3>
-            <p>Validated data drives every scene.</p>
-          </div>
-        </div>
-        <div>
-          <Layers3 size={18} />
-          <div>
-            <h3>Made to be edited</h3>
-            <p>Objects and animation stay in your hands.</p>
-          </div>
-        </div>
-        <div>
-          <Workflow size={18} />
-          <div>
-            <h3>Your choice of AI</h3>
-            <p>Model configuration arrives in M3.</p>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function FeaturePage({
-  eyebrow,
-  title,
-  description,
-  milestone,
-  action,
-  icon: Icon,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-  milestone: string;
-  action: string;
-  icon: typeof Box;
-}) {
-  return (
-    <>
-      <div className="page-intro">
-        <div>
-          <p className="eyebrow">{eyebrow}</p>
-          <h1>{title}</h1>
-          <p>{description}</p>
-        </div>
-      </div>
-      <section className="content-panel feature-empty">
-        <Icon size={44} strokeWidth={1} />
-        <h2>Available in {milestone}</h2>
-        <p>
-          This part of the studio is planned and has not been implemented yet.
-        </p>
-        <button className="button" disabled aria-describedby="feature-reason">
-          {action}
-        </button>
-        <p id="feature-reason" className="muted">
-          Requires the {milestone} implementation.
-        </p>
-        <Link className="text-link" to="/roadmap">
-          View milestone acceptance criteria <ArrowRight size={15} />
-        </Link>
-      </section>
-    </>
   );
 }
 
@@ -236,7 +83,7 @@ function Roadmap() {
       >
         {roadmap.map((step) => (
           <div
-            className={`roadmap-row ${step.id === 'M0' ? 'current' : ''}`}
+            className={`roadmap-row ${step.id === 'M9' ? 'current' : ''}`}
             key={step.id}
           >
             <span className="milestone-id">{step.id}</span>
@@ -257,7 +104,15 @@ export function App() {
   const location = useLocation();
   const activeTitle =
     navigation.find((item) => item.to === location.pathname)?.label ??
-    (location.pathname === '/roadmap' ? 'Build plan' : 'Page not found');
+    (location.pathname === '/scene-editor'
+      ? '3D Scene Editor'
+      : location.pathname === '/projects'
+        ? 'Scene Projects'
+        : location.pathname === '/assets'
+          ? 'Scene Assets'
+          : location.pathname === '/roadmap'
+            ? 'Build plan'
+            : 'Page not found');
   useEffect(() => {
     document.title = `SceneCraft AI · ${activeTitle}`;
   }, [activeTitle]);
@@ -297,16 +152,17 @@ export function App() {
             <span className="step-label">
               <Sparkles size={13} /> In development
             </span>
-            <h2>A world in the making.</h2>
+            <h2>Cut the story in camera.</h2>
             <p>
-              Follow the studio from foundation to your first animated scene.
+              Direct a sequence of cinematic angles and render the finished
+              video.
             </p>
             <Link to="/roadmap">
               Build plan <ArrowRight size={14} />
             </Link>
           </div>
           <div className="local-label">
-            <ShieldCheck size={14} /> Local foundation
+            <ShieldCheck size={14} /> Local development
           </div>
         </div>
       </aside>
@@ -316,58 +172,16 @@ export function App() {
             Workspace <span>/</span> <strong>{activeTitle}</strong>
           </div>
           <span className="release-label">
-            <Check size={13} /> Foundation release
+            <Check size={13} /> Local MVP
           </span>
         </header>
         <main id="main-content" tabIndex={-1}>
           <Routes>
-            <Route path="/" element={<Studio />} />
-            <Route
-              path="/projects"
-              element={
-                <FeaturePage
-                  eyebrow="Your scene library"
-                  title="Projects"
-                  description="A home for your scenes, revisions and ideas."
-                  milestone="Milestone 7"
-                  action="New project"
-                  icon={FolderOpen}
-                />
-              }
-            />
-            <Route
-              path="/assets"
-              element={
-                <FeaturePage
-                  eyebrow="The building blocks"
-                  title="Assets"
-                  description="Procedural presets and validated local imports."
-                  milestone="Milestone 6"
-                  action="Import asset"
-                  icon={Boxes}
-                />
-              }
-            />
-            <Route
-              path="/ai-models"
-              element={
-                <>
-                  <FeaturePage
-                    eyebrow="Choose the intelligence behind your scenes"
-                    title="AI Models"
-                    description="Provider connections, model capabilities and task assignments."
-                    milestone="Milestone 3"
-                    action="Add provider"
-                    icon={Workflow}
-                  />
-                  <p className="notice">
-                    <ShieldCheck size={16} /> Credential entry is disabled until
-                    authentication, encryption and ownership checks are
-                    implemented. No AI provider is connected.
-                  </p>
-                </>
-              }
-            />
+            <Route path="/" element={<VideoStudio />} />
+            <Route path="/scene-editor" element={<Editor />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/assets" element={<Assets />} />
+            <Route path="/ai-models" element={<AIModels />} />
             <Route
               path="/settings"
               element={

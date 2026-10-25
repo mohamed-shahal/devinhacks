@@ -45,9 +45,10 @@ export function Preferences({
         <div>
           <h3>Privacy</h3>
           <p>
-            Only your appearance preference is stored locally in M0. No prompts,
-            images or credentials are collected. The app checks the local API
-            health endpoint.
+            Projects and imported assets stay in this browser. Prompts and
+            attached images are sent to OpenAI only when you choose real
+            generation; demo templates stay local. Provider keys are encrypted
+            by the local API and are not shown again after saving.
           </p>
         </div>
       </div>
@@ -55,8 +56,9 @@ export function Preferences({
         <div>
           <h3>Scene autosave & render quality</h3>
           <p>
-            Available with the editor in Milestone 2. No project data is stored
-            yet.
+            Scene changes autosave to browser storage. Render quality can be
+            changed in the Studio header. Clear browser site data to remove
+            local projects and assets.
           </p>
         </div>
       </div>

@@ -1,7 +1,42 @@
 # SceneCraft AI — Complete Implementation Specification
 
 **File:** `implement.md`  
-**Purpose:** Source of truth for implementing a browser-based AI 3D animation studio with configurable AI providers/models, live Three.js rendering, conversational refinement, project persistence and export.
+**Purpose:** Source of truth for implementing a browser-based cinematic video studio with configurable AI video providers, a directed multi-shot workflow, MP4 output and secure local credential handling. Earlier 3D-scene requirements remain as legacy implementation details where they do not conflict with this current product contract.
+
+## Current product contract — video-first direction (2026-10-25)
+
+### User clarification — long scripts, narration and reliability (2026-10-25)
+
+The primary Studio accepts a complete script, not only a short brief. This amendment supersedes the earlier 250-character/10–15-second/silent-only Studio limits. Keep OpenAI → validated structured scenes → Three.js rendered film as the primary pipeline. Support up to 12,000 input characters, up to twelve ordered script sections, and a maximum ten-minute film. Scene headings and paragraph/sentence boundaries guide segmentation; never discard tail text to meet the scene count. Preserve narrative and dialogue, maintain character/art-direction continuity, and provide the prepared scene titles, narration previews and actual durations for review before capture. Reject excessive scripts with an actionable chapter-splitting message.
+
+Use background Responses requests with bounded polling and cancellation instead of holding the browser request open for several minutes. The local API returns a job ID immediately. Polling can reconnect after page refresh; completed scenes and narration are kept for retry, and retrying an audio failure must not repeat the paid scene-generation request. Retrieve retries must poll the same provider response rather than resubmit generation. Use a compact model-facing scene contract that expands into the existing authoritative scene schema; validate before rendering and allow one bounded repair for invalid model output.
+
+Audio is now an actual generated narration track. Use server-owned OpenAI Realtime connections with configurable supported model and built-in voice. Disclose AI-generated voice and additional provider usage. Use actual PCM duration to extend scene timing so spoken audio is not clipped. Combine narration with the Three.js recording as AAC audio in an H.264 MP4; never label a silent fallback as narrated. Users can choose Silent. Narration is one narrator, without lip sync, voice cloning, music generation or soundtrack editing. The legacy editor remains functional.
+
+Improve stylized visual results through explicit art direction, recognizable compound subjects, foreground/background depth, key/fill/rim lighting, subject-aware camera framing and animation; omit the editing grid in film output. Offer HD and Full HD render sizes. Do not promise photorealism or professional rigging. Keep framing/movement controls and show actual progress/cancellation throughout preparation and capture.
+
+Current local job retention: one active preparation, six cached jobs maximum, one hour after the last preparation update, in API process memory. Refresh/navigation can resume preparation while the process runs; restarting the API clears jobs. Prepared jobs can be deleted through the Studio. MP4 files must be downloaded for lasting storage. Document OpenAI's temporary background-response retention (`store: false` does not remove the temporary polling window).
+
+
+### User clarification — OpenAI scene generation is required (2026-10-25)
+
+The user has clarified the primary generation flow: **an OpenAI model must generate the structured scene, and Three.js must render that scene into the finished cinematic video.** OpenAI is the scene planner, not the video renderer. GPT-6.1 Sol is the recommended automatic scene-planning model because OpenAI documents it as a balance of intelligence and cost and it supports Structured Outputs. Keep model choice configurable. Automatic scene-planning routing should prefer this model when it is configured with verified text and structured-output capabilities; otherwise it may use another eligible OpenAI model. Do not silently substitute a local procedural scene when OpenAI is unavailable. Block rendering with a clear setup path until an eligible model is connected and assigned. Local templates remain available only in explicitly labeled demo/editor flows. The API key must be entered by the user through AI Models and remain server-side in the local encrypted vault.
+
+This clarification supersedes the earlier sentence allowing the primary Studio to use local procedural scene generation when no scene-planning model is configured, and the former local-only Studio acceptance criteria. Runway stays optional; it is not part of the OpenAI → Three.js primary pipeline.
+
+### User clarification — Three.js-rendered video (2026-10-25)
+
+The user's clarification supersedes the Runway-first implementation choice above: the requested video must be **rendered by the app's Three.js scene runtime**, with the final deliverable being a cinematic video file made from camera shots. The 3D scene is the internal source/rendering medium; the primary Studio presents a shot-directing workflow and finished video, not an interactive 3D world as the output. Runway may remain an optional provider path, but it must not be required or be the default renderer. The validated scene schema and renderer take the OpenAI-generated structured scene as input; Three.js renders every video frame. Preserve per-shot angle/movement controls and make each shot affect the rendered camera. Keep output playable and downloadable, document actual browser/container support and transcoding requirements, and do not claim generated audio unless an actual audio track is present.
+
+The prior M9 Runway integration remains available but becomes an optional render engine. Current Studio default/primary acceptance is a local Three.js render with animated scene content, actual camera changes between directed shots, visible render progress, preview and download. The implementation plan and verification docs must track this correction.
+
+This amendment records the user's current product requirement and supersedes conflicting earlier wording below, especially “editable output, not a disposable video,” the 3D-world primary journey, deferring video rendering, and the scene-editor-first demo. The existing schema, renderer and scene editor are preserved as working legacy functionality at `/scene-editor`; they are not the primary product, navigation or expected output.
+
+SceneCraft's primary deliverable is a finished cinematic video made from a short story prompt and a deliberate sequence of camera angles and movements. The default Studio must not ask users to assemble a 3D world or present a Three.js scene as the final artifact. It must let a user direct three to five ordered shots, either randomizing a distinct set of angles/moves or manually choosing each, set length/aspect/audio, submit the resolved shot list to a real video-generation provider, show asynchronous progress, preview the returned video and download an MP4. A decorative storyboard is guidance only and must never be presented as generated footage.
+
+The first provider implementation uses Runway's documented multi-shot video recipe in custom-shot mode. Keys remain in the local API's encrypted vault; the browser never calls Runway directly. The API stores task references, polls task status, and proxies the generated MP4. Provider output URLs are temporary and must never be returned to the browser. Actual generation requires a user-configured provider account and may consume paid credits. Without a provider key, the app shows a clear setup path and never fakes a completed video.
+
+Primary journey: connect Runway → describe the story → edit/reorder 3–5 camera shots → choose landscape/portrait/square, 10/15 seconds and audio → submit → track progress → preview and download the real MP4. Scene-schema and scene-editor features remain available as a separate legacy route, not as a substitute for video output.
 
 ## 0. Instructions to the coding agent
 
@@ -19,28 +54,25 @@ Rules:
 9. Run lint, typecheck, tests and production build before completion.
 10. Update documentation when architectural decisions change.
 
-**Definition of done:** users can configure and test a provider, assign models to tasks, generate an animated scene from a prompt, refine it through chat, play/pause/reset, edit objects, undo/redo, save/reopen a project and export a usable artifact. Demo mode works without credentials.
+**Definition of done:** users can configure and test the video provider, direct a multi-shot cinematic sequence, generate a real video, track its progress, preview it and download a usable MP4. Provider-absent state is honest and actionable. Legacy scene editing remains runnable but is not represented as the primary output.
 
 ---
 
 ## 1. Product overview
 
 ### Vision
-SceneCraft AI turns natural-language descriptions into editable animated Three.js scenes. Users can optionally upload a reference image, refine scenes conversationally, inspect objects and animation tracks, and export projects. A first-class **AI Models** control center configures providers, credentials, models, capabilities, task routing and generation preferences.
+SceneCraft AI turns a story brief into an animated cinematic video assembled from directed camera shots. Users can edit shot order, angles, movement and action, choose output framing and audio, preview the rendered result and download MP4. A first-class **AI Models** control center configures providers and securely stores credentials. The previous editable Three.js scene editor remains a separate legacy tool.
 
 ### Primary user journey
-1. Open Studio and create a scene from a prompt, template or saved project.
-2. Optionally upload a reference image.
-3. Route the request to an eligible configured model.
-4. Receive a structured scene specification.
-5. Validate it, then render it in Three.js.
-6. Play, pause, reset, orbit/zoom, select objects and edit properties.
-7. Ask for a change; receive and validate a targeted scene patch.
-8. Review, accept or undo the change.
-9. Save revisions and export JSON, project archive or supported standalone HTML.
+1. Open Video Studio and write a short story brief.
+2. Shape a three to five shot camera sequence, including angle and movement for every cut.
+3. Choose format, duration and audio; review provider and credit notice.
+4. Submit to the configured video-generation provider and track its asynchronous task.
+5. Preview the real rendered video and download the MP4.
 
 ### Product principles
-- Editable output, not a disposable video.
+- The finished rendered video is the primary output.
+- Camera language and shot order are explicit, editable creative inputs.
 - Transparent AI actions and clear errors.
 - Configurable providers and task-specific model routing.
 - Browser-local scene rendering where practical.
@@ -52,59 +84,48 @@ SceneCraft AI turns natural-language descriptions into editable animated Three.j
 Creators, designers, students and developers who want to build animated 3D concepts without learning a full professional 3D package.
 
 ### Non-goals for MVP
-Do not try to replace Blender/Maya; generate photorealistic rigged characters from scratch; support every provider on day one; provide unrestricted code execution; guarantee every project can fit in one HTML file; or implement collaboration, billing, marketplace and video rendering unless the core product is complete.
+Do not try to replace Blender/Maya; generate photorealistic rigged characters from scratch; support every provider on day one; provide unrestricted code execution; or implement collaboration, billing, marketplace, or a professional non-linear editor. The primary video output is in scope now. Do not present local templates or storyboard art as AI-rendered video.
 
 ---
 
 ## 2. Scope and priorities
 
 ### P0 — required
-- Responsive app: Studio, Projects, Assets, AI Models, Settings.
-- Prompt-to-scene using one real provider adapter.
-- Optional reference-image analysis if supported by selected model.
-- Versioned structured scene schema and validation.
-- Three.js runtime for primitives, procedural objects, materials, lights, camera and animations.
-- Chat refinement via validated patches.
-- Play/pause/reset, orbit/zoom, object selection and inspector.
-- Undo/redo and revisions.
-- Provider connections: add/edit/delete/test; secure credential handling.
-- Model catalog, capability tracking and task-specific assignments.
-- Explicit fallback behavior.
-- Project create/save/open/duplicate/rename/delete.
-- Export scene JSON, project ZIP and standalone HTML when feasible.
-- Demo mode without API credentials.
-- Loading, empty, success and error states.
+- Responsive Video Studio, AI Models and Settings.
+- Story brief and directed, reorderable three-to-five shot list.
+- Per-shot camera angle, movement and action controls.
+- Real asynchronous multi-shot video generation through one provider.
+- Status polling, secure output streaming, playback preview and MP4 download.
+- Landscape, portrait and square framing; supported durations; audio toggle.
+- Provider connection testing and encrypted credential handling.
+- Clear credit disclosure, progress/error states and actionable no-provider setup.
 - Unit/integration/E2E tests and setup documentation.
+- Keep existing 3D scene tools runnable at a separate legacy route.
 
 ### P1 — after P0
-More provider adapters; revision timeline; prompt presets; GLB/GLTF import; richer procedural assets and animations; usage summaries; autosave/recovery; keyboard shortcuts; compatible local endpoint.
+Reference image to video; more video providers and models; saved video library; generation presets; prompt presets; usage summaries; keyboard shortcuts; compatible local endpoint.
 
 ### P2 — defer
-Arbitrary generated-code mode; real-time collaboration; video/audio rendering; AI mesh generation; advanced rigging; marketplace; billing; social publishing.
+Arbitrary generated-code mode; real-time collaboration; AI mesh generation; advanced rigging; marketplace; billing; social publishing; full nonlinear editing.
 
 ---
 
 ## 3. UX and information architecture
 
+### Visual language
+Use a minimal editing-desk interface: quiet paper/graphite surfaces, one muted evergreen accent, thin separators, restrained type hierarchy, and almost no decorative shadows or gradients. Light is the default, with a matching low-contrast dark theme. Keep the video frame as the only dark, cinematic focal surface; supporting controls should stay calm and compact. Maintain the same visual rules across Video Studio, AI Models, Settings, projects, assets, and the legacy scene editor.
+
 ### Global navigation
-- **Studio**
-- **Projects**
-- **Assets**
+- **Video Studio**
 - **AI Models**
 - **Settings**
 
-Header includes project name, save state, undo/redo, preview quality and export.
+The primary Studio header identifies the active cinematic brief and render state. Legacy scene-specific routes may retain their editor toolbar.
 
-### Studio layout
-Desktop:
-- Top: project title, save status, undo/redo, quality and export.
-- Left panel: prompt composer, generation options, scene hierarchy.
-- Center: 3D viewport.
-- Right panel: selected-object inspector.
-- Bottom: animation timeline and playback controls.
-- Chat refinement panel: collapsible or tabbed.
+### Video Studio layout
+Desktop: left-side story brief, editable ordered shot cards and render settings; right-side video stage and compact shot sequence strip. The final stage contains a real `<video>` preview only after successful provider output. Before generation it shows a clearly labeled empty state, not generated or simulated footage.
 
-Mobile: viewport-first layout with panels in tabs/drawers; all controls touch-friendly.
+Each shot has a shot number, angle, camera movement and action description. Provide a clear choice between randomly assigning distinct angle/movement presets (with a reshuffle action) and manually selecting angle/movement per shot. Random selections remain stable until explicitly reshuffled; random mode never re-rolls on render or unrelated edits. Support 3–5 shots, reordering, and adding/removing shots within those bounds. Mobile stacks the output stage first and the editing controls below, with no horizontal overflow and touch-sized controls.
 
 ### AI Models page
 Sections:

@@ -7,11 +7,11 @@ function readPreference(): { theme: Theme; storageError: boolean } {
   try {
     return {
       theme:
-        window.localStorage.getItem(storageKey) === 'light' ? 'light' : 'dark',
+        window.localStorage.getItem(storageKey) === 'dark' ? 'dark' : 'light',
       storageError: false,
     };
   } catch {
-    return { theme: 'dark', storageError: true };
+    return { theme: 'light', storageError: true };
   }
 }
 

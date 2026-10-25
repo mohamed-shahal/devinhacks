@@ -23,7 +23,7 @@ try {
     },
   );
   if (server instanceof Server) {
-    server.requestTimeout = 15_000;
+    server.requestTimeout = 120_000;
     server.headersTimeout = 10_000;
   }
   server.on('error', () => {

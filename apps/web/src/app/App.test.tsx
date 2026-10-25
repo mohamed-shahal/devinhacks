@@ -10,15 +10,19 @@ beforeEach(() => {
   window.localStorage.clear();
   vi.stubGlobal(
     'fetch',
-    vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          status: 'ok',
-          service: 'scenecraft-api',
-          milestone: 'M0',
-          mode: 'local-foundation',
-        }),
-      ),
+    vi.fn((input: RequestInfo | URL) =>
+      String(input).includes('/video-connections')
+        ? Promise.resolve(new Response('[]'))
+        : Promise.resolve(
+            new Response(
+              JSON.stringify({
+                status: 'ok',
+                service: 'scenecraft-api',
+                milestone: 'M8',
+                mode: 'local-only',
+              }),
+            ),
+          ),
     ),
   );
 });
@@ -40,21 +44,61 @@ function renderApp(path = '/') {
   );
 }
 
-describe('foundation app', () => {
-  it('navigates to models without presenting a working provider integration', async () => {
+describe('SceneCraft app', () => {
+  it('opens the Three.js video studio and model configuration', async () => {
     renderApp();
     expect(
-      screen.getByRole('heading', { name: 'Your scene starts here.' }),
+      screen.getByRole('heading', { name: 'Cinematic video studio' }),
     ).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('link', { name: 'AI Models' }));
-    expect(screen.getByRole('button', { name: 'Add provider' })).toBeDisabled();
     expect(
-      screen.getByText(/Credential entry is disabled/),
+      screen.getByRole('heading', { name: 'Camera sequence' }),
     ).toBeInTheDocument();
-    expect(await screen.findByText('Local API connected')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Your film will appear here' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Prepare scenes & narration' }),
+    ).toBeEnabled();
+    expect(
+      await screen.findByText(/Connect OpenAI, add GPT-6\.1 Sol/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/OpenAI creates the structured scene/),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Prepare scenes & narration' }),
+    );
+    expect(
+      await screen.findByText(
+        /Connect OpenAI and configure an enabled scene-planning model/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('tree', { name: 'Scene hierarchy' }),
+    ).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('link', { name: 'AI Models' }));
+    expect(
+      screen.getByRole('button', { name: 'Add connection' }),
+    ).toBeDisabled();
+    expect(screen.getByLabelText('OpenAI API key')).toBeInTheDocument();
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'Provider' }),
+      'runway',
+    );
+    expect(screen.getByLabelText('Runway API key')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Provider connections' }),
+    ).toBeInTheDocument();
   });
   it('applies and persists a theme preference', async () => {
     renderApp('/settings');
+    expect(document.documentElement.dataset.theme).toBe('light');
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'Appearance' }),
+      'dark',
+    );
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(window.localStorage.getItem('scenecraft:theme')).toBe('dark');
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: 'Appearance' }),
       'light',
@@ -68,7 +112,7 @@ describe('foundation app', () => {
       screen.getByRole('link', { name: 'Return to Studio' }),
     );
     expect(
-      screen.getByRole('heading', { name: 'Your scene starts here.' }),
+      screen.getByRole('heading', { name: 'Cinematic video studio' }),
     ).toBeInTheDocument();
   });
 });
