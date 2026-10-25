@@ -4,6 +4,12 @@ Repository: **devinhacks**.
 
 A browser-based cinematic video studio. Write a story, direct a sequence of camera angles and movements, and render a finished animated video locally with Three.js. The current product contract is [implement.md](implement.md); the scene editor remains available separately at `/scene-editor`.
 
+## Sample film
+
+Two AI-planned Three.js scenes, six cinematic camera cuts, and OpenAI narration. This optimized GIF is a silent preview; narration is included in the original MP4 output.
+
+![Animated sample film: an explorer carries a lantern from an indigo forest to a stone bridge at dawn](docs/assets/script-film-sample.gif)
+
 ## Current state
 
 The initial directory was empty. See [the audit](docs/audit.md) and [milestone plan](docs/implementation-plan.md) for current status and remaining hosted-deployment work.

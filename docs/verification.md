@@ -13,6 +13,7 @@ Date: 2026-10-25. Runtime: Node 25.2.1 / npm 11.6.2 on macOS. CI targets Node 24
 - Live paid end-to-end smoke test: the configured OpenAI `gpt-6.1-sol` connection generated two scenes from a 479-character screenplay. `gpt-realtime-2.1-mini` generated Marin narration for both. The browser rendered six directed camera cuts through Three.js; FFmpeg produced an MP4 with narration. No template scene was substituted.
 - Final sample inspected with ffprobe: **1280×720 H.264, 24 kHz mono AAC, 15.872 seconds, 2,067,359 bytes**. FFmpeg volume analysis confirmed non-silent audio (peak −7.4 dB). Contact-sheet review confirmed distinct forest/bridge scenes and wide/hero/close framing. The earlier high-DPI size doubling was corrected with a fixed capture pixel ratio. Full HD and portrait/square dimensions are implemented but were not separately smoke-tested against a live generated film.
 - Ignored local evidence: `.local/verification/script-film-with-narration.mp4`, `studio-narrated-film.png` and `film-contact-sheet.jpg`. The Studio preview and download were verified without browser console warnings/errors during the live render.
+- Public README preview: the verified 15.872-second narrated MP4 was converted to an optimized 480×270, 8 fps, 127-frame GIF (`docs/assets/script-film-sample.gif`). It is about 3.2 MB; as expected, GIF has no audio. The README labels it as a silent preview.
 - `npm audit --audit-level=low`: zero vulnerabilities on dependency installation.
 
 ## Operation and limits
