@@ -122,7 +122,21 @@ export function VideoStudio() {
   const restoring = useRef(Boolean(jobId));
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
-  const controlsLocked = busy || Boolean(job);
+  const controlsLocked = busy || job?.status === 'preparing';
+  const currentInput: FilmInput = {
+    script: story.trim(),
+    mode: inputMode,
+    duration,
+    ratio,
+    resolution,
+    audio: audioEnabled,
+    voice,
+    voiceModel,
+    shots,
+    ...(sceneModelId === 'automatic' ? {} : { modelId: sceneModelId }),
+  };
+  const preparedInputMatches =
+    Boolean(job) && JSON.stringify(job!.input) === JSON.stringify(currentInput);
   const totalSeconds = job?.segments.length
     ? job.segments.reduce(
         (total, segment) => total + segment.durationSeconds,
@@ -153,6 +167,7 @@ export function VideoStudio() {
           setAudioEnabled(input.audio);
           setVoice(input.voice);
           setVoiceModel(input.voiceModel);
+          setSceneModelId(input.modelId ?? 'automatic');
           restoring.current = false;
         }
         setStatus(current.stage);
@@ -225,21 +240,13 @@ export function VideoStudio() {
         throw new Error(
           'The assigned scene-planning model is unavailable. Update AI Models or choose Automatic.',
         );
-      if (job?.status === 'ready') {
+      if (job?.status === 'ready' && preparedInputMatches) {
         await renderPreparedFilm(job);
         return;
       }
+      if (job && !preparedInputMatches) await deleteFilm(job.id);
       const current = await startFilm({
-        script: story,
-        mode: inputMode,
-        duration,
-        ratio,
-        resolution,
-        audio: audioEnabled,
-        voice,
-        voiceModel,
-        shots,
-        ...(sceneModelId === 'automatic' ? {} : { modelId: sceneModelId }),
+        ...currentInput,
       });
       setJob(current);
       setJobId(current.id);
@@ -766,7 +773,8 @@ export function VideoStudio() {
                 busy ||
                 story.trim().length < 8 ||
                 shots.length < 3 ||
-                (Boolean(job) && job?.status !== 'ready')
+                ((job?.status === 'failed' || job?.status === 'canceled') &&
+                  preparedInputMatches)
               }
             >
               {busy ? (
@@ -779,14 +787,16 @@ export function VideoStudio() {
               ) : (
                 <>
                   <Clapperboard size={17} />{' '}
-                  {job?.status === 'ready'
+                  {job?.status === 'ready' && preparedInputMatches
                     ? videoUrl
                       ? 'Render again'
                       : recording
                         ? 'Retry MP4 encoding'
                         : 'Render prepared film'
                     : audioEnabled
-                      ? 'Prepare scenes & narration'
+                      ? job?.status === 'ready'
+                        ? 'Prepare updated film'
+                        : 'Prepare scenes & narration'
                       : 'Prepare scenes'}
                 </>
               )}
@@ -801,6 +811,7 @@ export function VideoStudio() {
               </button>
             )}
             {(job?.status === 'failed' || job?.status === 'canceled') &&
+              preparedInputMatches &&
               !busy && (
                 <button
                   className="edit-sequence-button"
@@ -818,6 +829,12 @@ export function VideoStudio() {
               >
                 Edit script and settings
               </button>
+            )}
+            {job && !preparedInputMatches && !busy && (
+              <p className="video-progress" role="status">
+                Your prompt or settings changed. Prepare an updated film to use
+                them. The current video stays available until the next render.
+              </p>
             )}
             {status && (
               <p className="video-progress" role="status">

@@ -62,7 +62,9 @@ test('long script and narration preparation can resume and retry without losing 
     });
   });
   await page.route(`**/api/v1/films/${id}`, (route) =>
-    route.fulfill({ json: failed() }),
+    route.request().method() === 'DELETE'
+      ? route.fulfill({ json: null })
+      : route.fulfill({ json: failed() }),
   );
   await page.route(`**/api/v1/films/${id}/retry`, (route) => {
     retried = true;
@@ -104,6 +106,16 @@ test('long script and narration preparation can resume and retry without losing 
     'src',
     `/api/v1/films/${id}/audio/0`,
   );
+  const scriptEditor = page.getByLabel('Full script');
+  await expect(scriptEditor).toBeEnabled();
+  const updatedScript = `${script}\n\nSCENE 3 — HOME\nThe lantern shines.`;
+  await scriptEditor.fill(updatedScript);
+  await expect(
+    page.getByRole('button', { name: 'Prepare updated film' }),
+  ).toBeEnabled();
+  await expect(page.getByText(/Your prompt or settings changed/)).toBeVisible();
+  await page.getByRole('button', { name: 'Prepare updated film' }).click();
+  expect(input!.script).toBe(updatedScript);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
